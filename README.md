@@ -9,6 +9,9 @@ usage: ExtensiveRoleCheck.py [-h] [--clusterRole CLUSTERROLE] [--role ROLE]
 
 
 ## Overview
+
+**Status**: Alpha
+
 The RBAC API is a set of roles that administrators can configure to limit access to the Kubernetes resources. The *ExtensiveRoleCheck* automate the searching process and output the risky roles and rolebindings found in the RBAC API. 
 
 ## Requirements:
@@ -43,3 +46,8 @@ kubectl get clusterrolebindings -o json > clusterrolebindings.json
 python ExtensiveRoleCheck.py --clusterRole clusterroles.json  --role Roles.json --rolebindings rolebindings.json --cluseterolebindings clusterrolebindings.json
 ```
 ![Output example](https://github.com/cyberark/kubernetes-rbac-audit/blob/master/output-example.png)
+
+##  Maintainers:
+Or Ida: or.ida@cyberark.com
+
+
