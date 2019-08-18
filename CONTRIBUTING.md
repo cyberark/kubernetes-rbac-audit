@@ -12,10 +12,4 @@ Thanks for your interest in Conjur. Before contributing, please take a moment to
 6. Add the `implemented` label to the issue, and ask another contributor to review and merge your code
 7. Close the issue
 
-## Style guide
-
-Use [this guide][style] to maintain consistent style across the rbac-audit project.
-
-[style]: STYLE.md
-[tests]: README.md#Testing
 
