@@ -1,5 +1,3 @@
-**Status**: Beta
-
 # ExtensiveRoleCheck
 
 `ExtensiveRoleCheck` is a python tool that scanning the Kubernetes RBAC for risky roles in an offlline mode. The tool is a part of the "Kubernetes Pentest Methdology" blog post series.
