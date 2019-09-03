@@ -1,6 +1,6 @@
 # ExtensiveRoleCheck
 
-`ExtensiveRoleCheck` is a python tool that scanning the Kubernetes RBAC for risky roles in an offlline mode. The tool is a part of the "Kubernetes Pentest Methdology" blog post series.
+`ExtensiveRoleCheck` is a Python tool that scans the Kubernetes RBAC for risky roles. The tool is a part of the "Kubernetes Pentest Methdology" blog post series.
 ```
 usage: ExtensiveRoleCheck.py [-h] [--clusterRole CLUSTERROLE] [--role ROLE]  
                            [--rolebindings ROLEBINDINGS]  
@@ -12,11 +12,11 @@ usage: ExtensiveRoleCheck.py [-h] [--clusterRole CLUSTERROLE] [--role ROLE]
 
 **Status**: Alpha
 
-The RBAC API is a set of roles that administrators can configure to limit access to the Kubernetes resources. The *ExtensiveRoleCheck* automate the searching process and output the risky roles and rolebindings found in the RBAC API. 
+The RBAC API is a set of roles that administrators can configure to limit access to the Kubernetes resources. The *ExtensiveRoleCheck* automates the searching process and outputs the risky roles and rolebindings found in the RBAC API. 
 
 ## Requirements:
 
-*ExtensiveRoleCheck* work in offline mode, it means that you should first export the following `JSON` from your Kubernetes cluster configuration:
+*ExtensiveRoleCheck* works in offline mode. This means that you should first export the following `JSON` from your Kubernetes cluster configuration:
 
  - Roles 
  - ClusterRoles 
