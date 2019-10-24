@@ -176,7 +176,7 @@ class roleBingingChecker(object):
         for entity in self._json_file['items']:
             _role_name = entity['metadata']['name']
             _rol_ref = entity['roleRef']['name']
-            if entity['subjects'] == None:
+            if not entity.get('subjects', None):
                 continue
             if _rol_ref in self._extensive_roles:
                 _rolebiding_found.append(_rol_ref)
