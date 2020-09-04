@@ -1,6 +1,10 @@
 # Contributing to Kubernetes-rbac-audit
 
-Thanks for your interest in Conjur. Before contributing, please take a moment to read and sign our <a href="https://github.com/cyberark/conjur/blob/master/Contributing_OSS/CyberArk_Open_Source_Contributor_Agreement.pdf" download="conjur_contributor_agreement">Contributor Agreement</a>. This provides patent protection  allows CyberArk to enforce its license terms. Please email a signed copy to <a href="oss@cyberark.com">oss@cyberark.com</a>.
+Thanks for your interest in this project!
+
+For general contribution and community guidelines, please see the [community repo](https://github.com/cyberark/community).
+In particular, before contributing please review our [contributor licensing guide](https://github.com/cyberark/community/blob/master/CONTRIBUTING.md#when-the-repo-does-not-include-the-cla)
+to ensure your contribution is compliant with our contributor license agreements.
 
 ## Pull Request Workflow
 
