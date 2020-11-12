@@ -43,6 +43,10 @@ class ExtensiveRolesChecker(object):
     def _generate(self):
         for entity in self._json_file['items']:
             role_name = entity['metadata']['name']
+            try:
+                iterator = iter(entity['rules'])
+            except TypeError:
+                continue
             for rule in entity['rules']:
                 if not rule.get('resources', None):
                     continue
@@ -218,7 +222,7 @@ if __name__ == '__main__':
         extensive_clusteRoleBindings = roleBingingChecker(clusterRoleBinding_json_file, extensive_roles, bind_kind)
 
     if args.rolebindings:
-        print(f'{Fore.WHITE}[*] Started enumerating risky RoleRoleBindings:')
+        print(f'{Fore.WHITE}[*] Started enumerating risky RoleBindings:')
         bind_kind = 'RoleBinding'
         RoleBinding_json_file = open_file(args.rolebindings)
         extensive_RoleBindings = roleBingingChecker(RoleBinding_json_file, extensive_roles, bind_kind)
