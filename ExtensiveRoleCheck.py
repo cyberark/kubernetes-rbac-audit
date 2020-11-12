@@ -210,27 +210,27 @@ if __name__ == '__main__':
         print(f'{Fore.WHITE}[*] Started enumerating risky Roles:')
         role_kind = 'Role'
         Role_json_file = open_file(args.role)
-        if not Role_json_file == None:
+        try:
             extensiveRolesChecker = ExtensiveRolesChecker(Role_json_file, role_kind)
             extensive_roles = [result for result in extensiveRolesChecker.results if result not in extensive_ClusterRoles]
             extensive_roles = extensive_roles + extensive_ClusterRoles
-        else:
+        except:
             print('\n[!] Roles returned None.')
 
     if args.cluseterolebindings:
         print(f'{Fore.WHITE}[*] Started enumerating risky ClusterRoleBinding:')
         bind_kind = 'ClusterRoleBinding'
         clusterRoleBinding_json_file = open_file(args.cluseterolebindings)
-        if not clusterRoleBinding_json_file == None:
+        try:
             extensive_clusteRoleBindings = roleBingingChecker(clusterRoleBinding_json_file, extensive_roles, bind_kind)
-        else:
+        except:
             print('\n[!] ClusterRoleBinding returned None.')
 
     if args.rolebindings:
         print(f'{Fore.WHITE}[*] Started enumerating risky RoleBindings:')
         bind_kind = 'RoleBinding'
         RoleBinding_json_file = open_file(args.rolebindings)
-        if not RoleBinding_json_file == None:
+        try:
             extensive_RoleBindings = roleBingingChecker(RoleBinding_json_file, extensive_roles, bind_kind)
-        else:
+        except:
             print('\n[!] RoleBinding returned None.')
