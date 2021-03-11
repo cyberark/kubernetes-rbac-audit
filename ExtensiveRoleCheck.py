@@ -10,6 +10,7 @@ def get_argument_parser():
     parser.add_argument('--rolebindings', type=str, required=False, help='RoleBindings JSON file')
     parser.add_argument('--cluseterolebindings', type=str, required=False, help='ClusterRoleBindings JSON file')
     parser.add_argument('--pods', type=str, required=False, help='pods JSON file')
+    parser.add_argument('--outputjson', required=False, help='Produce json files with audit report')
     return parser.parse_args()
 
 # Read data from files
@@ -203,7 +204,6 @@ class roleBingingChecker(object):
 
         if element is None:
             element = {
-                'apiGroup': sub.get('apiGroup'),
                 'kind': sub.get('kind'),
                 'name': sub.get('name'),
                 'riskyRoles': []
@@ -224,30 +224,48 @@ class SubjectViewer:
         self.subject_risky_roles_mapping = subject_risky_roles_mapping
         self.checker = checker
         self.all_pods = all_pods
+        self.__prepare_json()
 
     def print_risky_roles_for_subjects(self):
         for subject in self.subject_risky_roles_mapping:
-            print('{color}{kind}: {name}'.format(color=Fore.YELLOW, kind=subject.get('kind'),
-                                                 name=subject.get('name')))
+            print('\n{color}{kind}: {name}'.format(color=Fore.YELLOW, kind=subject.get('kind'),
+                                                   name=subject.get('name')))
 
             for role in subject.get('riskyRoles'):
+                for permission in role.get('riskyRolePermissions'):
+                    self.__print_risky_permission(role, permission.get('permission'))
+
+            if self.all_pods is not None and subject.get('kind') == 'ServiceAccount':
+                self.__print_pods_using_service_account(subject.get('podUsingServiceAccount'))
+
+    def __prepare_json(self):
+        for subject in self.subject_risky_roles_mapping:
+            for role in subject.get('riskyRoles'):
+                role['riskyRolePermissions'] = []
                 risky_role_permissions = self.checker.results.get(role.get('name'))
-                role['risky_role_permissions'] = []
 
                 if risky_role_permissions is None:
                     continue
 
                 for permission in risky_role_permissions:
-                    role.get('risky_role_permissions').append({
+                    role.get('riskyRolePermissions').append({
                         'bindingKind': role.get('bindingKind'),
                         'bindingName': role.get('bindingName'),
                         'kind': role.get('kind'),
                         'name': role.get('name'),
+                        'permission': permission,
                     })
-                    self.__print_risky_permission(role, permission)
 
             if self.all_pods is not None and subject.get('kind') == 'ServiceAccount':
-                self.__print_pods_using_service_account(subject.get('name'))
+                subject['podUsingServiceAccount'] = []
+
+                for pod in self.__get_pods_for_service_account(subject.get('name')):
+                    pod_details = {'name': pod.get('metadata').get('name')}
+
+                    for key, value in self.__get_pod_metadata(pod).items():
+                        pod_details[key] = value
+
+                    subject['podUsingServiceAccount'].append(pod_details)
 
     @classmethod
     def __print_risky_permission(cls, role, permission):
@@ -262,19 +280,19 @@ class SubjectViewer:
               + f'{Fore.GREEN}[{role_kind}] {role_name} {Fore.RED}')
 
     @classmethod
-    def __print_pods_using_service_account(cls, service_account_name):
-        pods = cls.__get_pods_for_service_account(service_account_name)
-        if len(pods) > 0:
-            print(f'      {Fore.WHITE}Used in:')
+    def __print_pods_using_service_account(cls, pods):
+        if len(pods) == 0:
+            return
+
+        print(f'      {Fore.WHITE}Used in:')
 
         for pod in pods:
-            pod_name = pod.get('metadata').get('name')
+            text = ''
 
-            text = f'          {Fore.GREEN}[Pod] {pod_name}'
-            metadata = cls.__get_pod_metadata(pod)
-
-            for key, value in metadata.items():
-                text = text + f'{Fore.WHITE} / ' + f'{Fore.WHITE}[{key}] {value}'
+            for key, value in pod.items():
+                color = Fore.GREEN if key == 'name' else Fore.WHITE
+                text = '          ' if text == '' else text + ' / '
+                text += f'{color}[{key}] {value}'
 
             print(text)
 
@@ -337,6 +355,9 @@ if __name__ == '__main__':
         subject_viewer = SubjectViewer(extensive_RoleBindings.subject_risky_roles_mapping, extensiveRolesChecker, pods)
         subject_viewer.print_risky_roles_for_subjects()
 
+        if args.outputjson:
+            pass
+
     if args.clusterRole and args.cluseterolebindings:
         subject_viewer_cluster_level = SubjectViewer(
             extensive_clusteRoleBindings.subject_risky_roles_mapping,
@@ -344,3 +365,6 @@ if __name__ == '__main__':
             pods
         )
         subject_viewer_cluster_level.print_risky_roles_for_subjects()
+
+        if args.outputjson:
+            pass
