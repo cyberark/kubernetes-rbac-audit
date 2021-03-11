@@ -3,6 +3,17 @@ import argparse
 import logging
 from colorama import init, Fore, Back, Style
 
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def get_argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--clusterRole', type=str, required=False, help='ClusterRoles JSON file',)
@@ -10,7 +21,7 @@ def get_argument_parser():
     parser.add_argument('--rolebindings', type=str, required=False, help='RoleBindings JSON file')
     parser.add_argument('--cluseterolebindings', type=str, required=False, help='ClusterRoleBindings JSON file')
     parser.add_argument('--pods', type=str, required=False, help='pods JSON file')
-    parser.add_argument('--outputjson', required=False, help='Produce json files with audit report')
+    parser.add_argument('--outputjson', type=str2bool, nargs='?', const=True, default=False, help='Produce json files with audit report')
     return parser.parse_args()
 
 # Read data from files
@@ -238,6 +249,9 @@ class SubjectViewer:
             if self.all_pods is not None and subject.get('kind') == 'ServiceAccount':
                 self.__print_pods_using_service_account(subject.get('podUsingServiceAccount'))
 
+    def get_json(self):
+        return self.subject_risky_roles_mapping
+
     def __prepare_json(self):
         for subject in self.subject_risky_roles_mapping:
             for role in subject.get('riskyRoles'):
@@ -356,7 +370,9 @@ if __name__ == '__main__':
         subject_viewer.print_risky_roles_for_subjects()
 
         if args.outputjson:
-            pass
+            text_file = open("role_audit.json", "w")
+            text_file.write(json.dumps(subject_viewer.get_json()))
+            text_file.close()
 
     if args.clusterRole and args.cluseterolebindings:
         subject_viewer_cluster_level = SubjectViewer(
@@ -367,4 +383,6 @@ if __name__ == '__main__':
         subject_viewer_cluster_level.print_risky_roles_for_subjects()
 
         if args.outputjson:
-            pass
+            text_file = open("cluster_role_audit.json", "w")
+            text_file.write(json.dumps(subject_viewer.get_json()))
+            text_file.close()
