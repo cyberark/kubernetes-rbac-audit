@@ -239,8 +239,11 @@ class SubjectViewer:
 
     def print_risky_roles_for_subjects(self):
         for subject in self.subject_risky_roles_mapping:
-            print('\n{color}{kind}: {name}'.format(color=Fore.YELLOW, kind=subject.get('kind'),
-                                                   name=subject.get('name')))
+            print('{color}{kind}: {name}'.format(
+                color=Fore.YELLOW,
+                kind=subject.get('kind'),
+                name=subject.get('name')
+            ))
 
             for role in subject.get('riskyRoles'):
                 for permission in role.get('riskyRolePermissions'):
@@ -298,15 +301,13 @@ class SubjectViewer:
         if len(pods) == 0:
             return
 
-        print(f'      {Fore.WHITE}Used in:')
-
         for pod in pods:
             text = ''
 
             for key, value in pod.items():
                 color = Fore.GREEN if key == 'name' else Fore.WHITE
-                text = '          ' if text == '' else text + ' / '
-                text += f'{color}[{key}] {value}'
+                text = f'      {Fore.WHITE}Used in: ' if text == '' else text + ' / '
+                text += f'{color}[{key if key != "name" else "pod"}] {value}'
 
             print(text)
 
@@ -364,6 +365,9 @@ if __name__ == '__main__':
         extensive_RoleBindings = roleBingingChecker(RoleBinding_json_file, extensive_roles, bind_kind)
 
     pods = open_file(args.pods) if args.pods else None
+
+    if (args.role and args.rolebindings) or args.clusterRole and args.cluseterolebindings:
+        print(f'{Fore.WHITE}[*] Started enumerating risky subjects:')
 
     if args.role and args.rolebindings:
         subject_viewer = SubjectViewer(extensive_RoleBindings.subject_risky_roles_mapping, extensiveRolesChecker, pods)
