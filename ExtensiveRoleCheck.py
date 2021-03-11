@@ -9,6 +9,7 @@ def get_argument_parser():
     parser.add_argument('--role', type=str, required=False, help='roles JSON file')
     parser.add_argument('--rolebindings', type=str, required=False, help='RoleBindings JSON file')
     parser.add_argument('--cluseterolebindings', type=str, required=False, help='ClusterRoleBindings JSON file')
+    parser.add_argument('--pods', type=str, required=False, help='pods JSON file')
     return parser.parse_args()
 
 # Read data from files
@@ -172,6 +173,7 @@ class roleBingingChecker(object):
         self._extensive_roles = extensive_roles
         self._bind_kind = bind_kind
         self._results = []
+        self.subject_risky_roles_mapping = []
         self.bindsCheck()
 
     def bindsCheck(self):
@@ -186,6 +188,7 @@ class roleBingingChecker(object):
                 for sub in entity['subjects']:
                     if not sub.get('name', None):
                         continue
+                    self.add_role_binding_mapping(sub, entity)
                     self.print_rolebinding_results(sub, _role_name, self._bind_kind)
         return _rolebiding_found
 
@@ -195,6 +198,108 @@ class roleBingingChecker(object):
         else:
             print(f'{Fore.YELLOW}[!][{bind_kind}]{Fore.WHITE}\u2192 ' + f'{Fore.GREEN}{role_name}{Fore.RED} is binded to the {sub["kind"]}: {sub["name"]}!')
 
+    def add_role_binding_mapping(self, sub, binding):
+        element = next((item for item in self.subject_risky_roles_mapping if item['name'] == sub.get('name')), None)
+
+        if element is None:
+            element = {
+                'apiGroup': sub.get('apiGroup'),
+                'kind': sub.get('kind'),
+                'name': sub.get('name'),
+                'riskyRoles': []
+            }
+            self.subject_risky_roles_mapping.append(element)
+
+        element.get('riskyRoles').append({
+            "apiGroup": binding.get('roleRef', {}).get('apiGroup', {}),
+            "kind": binding.get('roleRef', {}).get('kind', {}),
+            "name": binding.get('roleRef', {}).get('name', {}),
+            "bindingKind": binding.get('kind', ''),
+            "bindingName": binding.get('metadata', {}).get('name'),
+        })
+
+
+class SubjectViewer:
+    def __init__(self, subject_risky_roles_mapping, checker, all_pods=None):
+        self.subject_risky_roles_mapping = subject_risky_roles_mapping
+        self.checker = checker
+        self.all_pods = all_pods
+
+    def print_risky_roles_for_subjects(self):
+        for subject in self.subject_risky_roles_mapping:
+            print('{color}{kind}: {name}'.format(color=Fore.YELLOW, kind=subject.get('kind'),
+                                                 name=subject.get('name')))
+
+            for role in subject.get('riskyRoles'):
+                risky_role_permissions = self.checker.results.get(role.get('name'))
+                role['risky_role_permissions'] = []
+
+                if risky_role_permissions is None:
+                    continue
+
+                for permission in risky_role_permissions:
+                    role.get('risky_role_permissions').append({
+                        'bindingKind': role.get('bindingKind'),
+                        'bindingName': role.get('bindingName'),
+                        'kind': role.get('kind'),
+                        'name': role.get('name'),
+                    })
+                    self.__print_risky_permission(role, permission)
+
+            if self.all_pods is not None and subject.get('kind') == 'ServiceAccount':
+                self.__print_pods_using_service_account(subject.get('name'))
+
+    @classmethod
+    def __print_risky_permission(cls, role, permission):
+        binding_kind = role.get('bindingKind')
+        binding_name = role.get('bindingName')
+
+        role_name = role.get('name')
+        role_kind = role.get('kind')
+
+        print(f'      {Fore.RED}{permission}{Fore.WHITE} \u2192 '
+              + f'{Fore.WHITE}[{binding_kind}] {binding_name}{Fore.WHITE} \u2192 '
+              + f'{Fore.GREEN}[{role_kind}] {role_name} {Fore.RED}')
+
+    @classmethod
+    def __print_pods_using_service_account(cls, service_account_name):
+        pods = cls.__get_pods_for_service_account(service_account_name)
+        if len(pods) > 0:
+            print(f'      {Fore.WHITE}Used in:')
+
+        for pod in pods:
+            pod_name = pod.get('metadata').get('name')
+
+            text = f'          {Fore.GREEN}[Pod] {pod_name}'
+            metadata = cls.__get_pod_metadata(pod)
+
+            for key, value in metadata.items():
+                text = text + f'{Fore.WHITE} / ' + f'{Fore.WHITE}[{key}] {value}'
+
+            print(text)
+
+    @classmethod
+    def __get_pods_for_service_account(cls, service_account_name):
+        pods_json_file = open_file('kmasuhrcluster/pods.json')
+        pods_to_check = pods_json_file.get('items', [])
+        return [x for x in pods_to_check if x.get('spec', {}).get('serviceAccountName', '') == service_account_name]
+
+    @classmethod
+    def __get_pod_metadata(cls, pod):
+        metadata = {'namespace': pod.get('metadata').get('namespace')}
+
+        owner_references = pod.get('metadata').get('ownerReferences')
+
+        if pod.get('metadata').get('labels').get('app', '') != '':
+            metadata['app'] = pod.get('metadata').get('labels').get('app', '')
+
+        if len(owner_references) > 0:
+            metadata[owner_references[0].get('kind')] = owner_references[0].get('name')
+
+        if pod.get('metadata').get('labels').get('heritage', '') == 'Helm':
+            metadata['helmChart'] = pod.get('metadata').get('labels').get('chart')
+
+        return metadata
 
 
 if __name__ == '__main__':
@@ -225,3 +330,17 @@ if __name__ == '__main__':
         bind_kind = 'RoleBinding'
         RoleBinding_json_file = open_file(args.rolebindings)
         extensive_RoleBindings = roleBingingChecker(RoleBinding_json_file, extensive_roles, bind_kind)
+
+    pods = open_file(args.pods) if args.pods else None
+
+    if args.role and args.rolebindings:
+        subject_viewer = SubjectViewer(extensive_RoleBindings.subject_risky_roles_mapping, extensiveRolesChecker, pods)
+        subject_viewer.print_risky_roles_for_subjects()
+
+    if args.clusterRole and args.cluseterolebindings:
+        subject_viewer_cluster_level = SubjectViewer(
+            extensive_clusteRoleBindings.subject_risky_roles_mapping,
+            extensiveClusterRolesChecker,
+            pods
+        )
+        subject_viewer_cluster_level.print_risky_roles_for_subjects()
