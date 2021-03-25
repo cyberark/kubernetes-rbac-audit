@@ -44,7 +44,7 @@ kubectl get clusterrolebindings -o json > clusterrolebindings.json
 ##  example & output:
 **Usage**
 ```
-python ExtensiveRoleCheck.py --clusterRole clusterroles.json  --role Roles.json --rolebindings rolebindings.json --cluseterolebindings clusterrolebindings.json
+python3 ExtensiveRoleCheck.py --clusterRole clusterroles.json  --role Roles.json --rolebindings rolebindings.json --cluseterolebindings clusterrolebindings.json
 ```
 ![Output example](https://github.com/cyberark/kubernetes-rbac-audit/blob/master/output-example.png)
 
