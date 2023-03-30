@@ -7,8 +7,8 @@ def get_argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--clusterRole', type=str, required=False, help='ClusterRoles JSON file',)
     parser.add_argument('--role', type=str, required=False, help='roles JSON file')
-    parser.add_argument('--rolebindings', type=str, required=False, help='RoleBindings JSON file')
-    parser.add_argument('--cluseterolebindings', type=str, required=False, help='ClusterRoleBindings JSON file')
+    parser.add_argument('--roleBindings', type=str, required=False, help='RoleBindings JSON file')
+    parser.add_argument('--clusterRoleBindings', type=str, required=False, help='ClusterRoleBindings JSON file')
     return parser.parse_args()
 
 # Read data from files
@@ -211,13 +211,13 @@ if __name__ == '__main__':
         extensive_roles = [result for result in extensiveRolesChecker.results if result not in extensive_ClusterRoles]
         extensive_roles = extensive_roles + extensive_ClusterRoles
 
-    if args.cluseterolebindings:
+    if args.clusterRoleBindings:
         print(f'{Fore.WHITE}[*] Started enumerating risky ClusterRoleBinding:')
         bind_kind = 'ClusterRoleBinding'
-        clusterRoleBinding_json_file = open_file(args.cluseterolebindings)
+        clusterRoleBinding_json_file = open_file(args.clusterRoleBindings)
         extensive_clusteRoleBindings = roleBingingChecker(clusterRoleBinding_json_file, extensive_roles, bind_kind)
 
-    if args.rolebindings:
+    if args.roleBindings:
         print(f'{Fore.WHITE}[*] Started enumerating risky RoleRoleBindings:')
         bind_kind = 'RoleBinding'
         RoleBinding_json_file = open_file(args.rolebindings)
