@@ -43,6 +43,8 @@ class ExtensiveRolesChecker(object):
     def _generate(self):
         for entity in self._json_file['items']:
             role_name = entity['metadata']['name']
+            if entity['rules'] is None:
+                continue
             for rule in entity['rules']:
                 if not rule.get('resources', None):
                     continue
